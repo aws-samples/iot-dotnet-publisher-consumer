@@ -1,60 +1,68 @@
 ﻿using System;
-using System.Security;
+using System.IO;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using M2Mqtt;
 using M2Mqtt.Messages;
-using M2Mqtt.Net;
-using M2Mqtt.Utility;
-using M2Mqtt.Internal;
 
 namespace Iotdotnetcoreconsumer
 {
     class Program
     {
+        private static ManualResetEvent manualResetEvent;
+
         static void Main(string[] args)
         {
-          Console.WriteLine("AWS IOT dotnetcore message consumer starting");
-            string IotEndPoint = "yourawsiotendpoint.amazonaws.com";
-            int BrokerPort = 8883;
-           string Topic = "Hello/World";
+            string iotEndpoint = "a2p1hwvv77f23d-ats.iot.us-east-1.amazonaws.com";
+            int brokerPort = 8883;
            
-            var CaCert = X509Certificate.CreateFromCertFile("/home/swethaudit/dotnetdevice/root-CA.crt");
-            var ClientCert = new X509Certificate2("/home/swethaudit/dotnetdevice/dotnet_devicecertificate.pfx", "password1");
+            Console.WriteLine("AWS IoT dotnetcore message consumer starting..");
+            var caCert = X509Certificate.CreateFromCertFile(Path.Join(AppContext.BaseDirectory, "AmazonRootCA1.crt"));
+            var clientCert = new X509Certificate2(Path.Join(AppContext.BaseDirectory, "certificate.cert.pfx"), "MyPassword1");
 
-          
-            string ClientId = Guid.NewGuid().ToString();
+            var client = new MqttClient(iotEndpoint, brokerPort, true, caCert, clientCert, MqttSslProtocols.TLSv1_2);
 
-            var IotClient = new MqttClient(IotEndPoint, BrokerPort, true, CaCert, ClientCert, MqttSslProtocols.TLSv1_2);
+            client.MqttMsgSubscribed += IotClient_MqttMsgSubscribed;
+            client.MqttMsgPublishReceived += IotClient_MqttMsgPublishReceived;
 
-            IotClient.MqttMsgSubscribed += IotClient_MqttMsgSubscribed;
-            IotClient.MqttMsgPublishReceived += IotClient_MqttMsgPublishReceived;
+            string clientId = Guid.NewGuid().ToString();
+            client.Connect(clientId);
+            Console.WriteLine($"Connected to AWS IoT with client ID: {clientId}");
 
-            IotClient.Connect(ClientId);
+            string topic = "Hello/World";
+            client.Subscribe(new string[] { topic }, new byte[] {MqttMsgBase.QOS_LEVEL_AT_LEAST_ONCE });
 
-            Console.WriteLine("Connected to AWS IOT");
-            IotClient.Subscribe(new string[] { Topic}, new byte[] {MqttMsgBase.QOS_LEVEL_AT_LEAST_ONCE });
+            // Keep the main thread alive for the event receivers to get invoked
+            KeepConsoleAppRunning(() => {
+                client.Disconnect();
+                Console.WriteLine("Disconnecting client..");
+            });
+        }
 
-            while (true)
+        private static void IotClient_MqttMsgPublishReceived(object sender, MqttMsgPublishEventArgs e)
+        {
+            Console.WriteLine("Message received: " + Encoding.UTF8.GetString(e.Message));
+        }
+
+        private static void IotClient_MqttMsgSubscribed(object sender, MqttMsgSubscribedEventArgs e)
+        {
+            Console.WriteLine($"Subscribed to the AWS IoT MQTT topic.");
+        }
+
+        private static void KeepConsoleAppRunning(Action onShutdown)
+        {
+            manualResetEvent = new ManualResetEvent(false);
+            Console.WriteLine("Press CTRL + C or CTRL + Break to exit...");
+
+            Console.CancelKeyPress += (sender, e) =>
             {
-                //Keeping the mainthread alive for the event receivers to get invoked
+                onShutdown();
+                e.Cancel = true;
+                manualResetEvent.Set();
+            };
 
-            }
-
+            manualResetEvent.WaitOne();
         }
-
-              private static void IotClient_MqttMsgPublishReceived(object sender, MqttMsgPublishEventArgs e)
-        {
-            Console.WriteLine("Message recived is " + System.Text.Encoding.UTF8.GetString(e.Message));
-        }
-
-
-       private static void IotClient_MqttMsgSubscribed(object sender, MqttMsgSubscribedEventArgs e)
-        {
-            Console.WriteLine("Subscribed to the AWS IOT MQTT topic  ");
-        }
-
-
     }
 }
