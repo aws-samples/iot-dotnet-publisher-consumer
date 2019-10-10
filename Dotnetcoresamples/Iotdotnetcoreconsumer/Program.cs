@@ -14,7 +14,7 @@ namespace Iotdotnetcoreconsumer
 
         static void Main(string[] args)
         {
-            string iotEndpoint = "a2p1hwvv77f23d-ats.iot.us-east-1.amazonaws.com";
+            string iotEndpoint = "yourendpointhere.iot.us-east-1.amazonaws.com";
             int brokerPort = 8883;
            
             Console.WriteLine("AWS IoT dotnetcore message consumer starting..");
