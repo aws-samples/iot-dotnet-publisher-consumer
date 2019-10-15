@@ -1,6 +1,8 @@
 CERTIFICATE_PEM_LOCATION="certificates/certificate.cert.pem"
 CA_CERTIFICATE_LOCATION="certificates/AmazonRootCA1.crt"
 
+mkdir certificates
+
 if test -f "certificates/AmazonRootCA1.crt"; then
     echo "Root CA certificate already exists.  Skipping download."
 else
