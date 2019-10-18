@@ -12,7 +12,7 @@ namespace Iotdotnetcorepublisher
         static void Main(string[] args)
         {
             string iotEndpoint = "yourendpointhere.iot.us-east-1.amazonaws.com";
-            Console.WriteLine("AWS IoT Dotnet core message publiser starting");
+            Console.WriteLine("AWS IoT Dotnet core message publisher starting");
             int brokerPort = 8883;
 
             string message = "Test message";
