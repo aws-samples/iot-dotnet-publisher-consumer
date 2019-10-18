@@ -4,6 +4,7 @@ using uPLibrary.Networking.M2Mqtt.Messages;
 using System.Security.Cryptography.X509Certificates;
 using System.IO;
 using System.Threading;
+using System.Text;
 
 namespace Iotconsumer
 {
@@ -13,7 +14,7 @@ namespace Iotconsumer
 
         static void Main(string[] args)
         {
-            string iotEndpoint = "youriotendpoint.iot.us-east-1.amazonaws.com";
+            string iotEndpoint = "yourendpointname.iot.us-east-1.amazonaws.com";
             int brokerPort = 8883;
 
             Console.WriteLine("AWS IoT dotnet message consumer starting..");
@@ -41,12 +42,12 @@ namespace Iotconsumer
 
         private static void Client_MqttMsgSubscribed(object sender, MqttMsgSubscribedEventArgs e)
         {
-            Console.WriteLine("Message subscribed");
+            Console.WriteLine($"Successfully subscribed to the AWS IoT topic.");
         }
 
         private static void Client_MqttMsgPublishReceived(object sender, MqttMsgPublishEventArgs e)
         {
-            Console.WriteLine("Message Received is      " + System.Text.Encoding.UTF8.GetString(e.Message));
+            Console.WriteLine("Message received: " + Encoding.UTF8.GetString(e.Message));
         }
 
         private static void KeepConsoleAppRunning(Action onShutdown)
