@@ -47,7 +47,7 @@ namespace Iotdotnetcoreconsumer
 
         private static void IotClient_MqttMsgSubscribed(object sender, MqttMsgSubscribedEventArgs e)
         {
-            Console.WriteLine($"Subscribed to the AWS IoT MQTT topic.");
+            Console.WriteLine($"Successfully subscribed to the AWS IoT topic.");
         }
 
         private static void KeepConsoleAppRunning(Action onShutdown)
