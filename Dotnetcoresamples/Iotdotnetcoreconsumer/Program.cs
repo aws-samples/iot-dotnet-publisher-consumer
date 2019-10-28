@@ -14,7 +14,7 @@ namespace Iotdotnetcoreconsumer
 
         static void Main(string[] args)
         {
-            string iotEndpoint = "yourendpointhere.iot.us-east-1.amazonaws.com";
+            string iotEndpoint = "<<your-iot-endpoint>>";
             int brokerPort = 8883;
            
             Console.WriteLine("AWS IoT dotnetcore message consumer starting..");
@@ -31,6 +31,7 @@ namespace Iotdotnetcoreconsumer
             Console.WriteLine($"Connected to AWS IoT with client ID: {clientId}");
 
             string topic = "Hello/World";
+            Console.WriteLine($"Subscribing to topic: {topic}");
             client.Subscribe(new string[] { topic }, new byte[] {MqttMsgBase.QOS_LEVEL_AT_LEAST_ONCE });
 
             // Keep the main thread alive for the event receivers to get invoked

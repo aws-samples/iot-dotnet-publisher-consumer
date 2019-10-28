@@ -31,7 +31,12 @@ else
     touch "certificates/$CERTIFICATE_ID.name"
 fi
 
-echo "Creating thing: dotnetthing.."
+echo "Creating thing: iot-dotnet-publisher-consumer.."
 aws iot register-thing \
     --template-body file://provisioning_template.json \
-    --parameters ThingName="dotnetthing",CertificateId="$CERTIFICATE_ID"
+    --parameters ThingName="iot-dotnet-publisher-consumer",CertificateId="$CERTIFICATE_ID"
+
+ENDPOINT_ADDRESS=$(aws iot describe-endpoint --output text)
+
+echo "Replacing iot endpoint with $ENDPOINT_ADDRESS.."
+find ./ -type f -name '*.cs' -exec sed -i '' -e "s/<<your-iot-endpoint>>/$ENDPOINT_ADDRESS/g" {} \;
