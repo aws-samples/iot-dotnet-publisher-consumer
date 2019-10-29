@@ -1,13 +1,16 @@
 Import-Module AWSPowerShell
 
-$CertificatePEMLocation = "certificates\certificate.cert.pem"
-$CACertificateLocation = "certificates\AmazonRootCA1.crt"
+$ScriptPath = $MyInvocation.MyCommand.Path
+$ScriptDirectory = Split-Path $ScriptPath
 
-if (!(Test-Path "certificates")) {
-    New-Item -Path "." -Name "certificates" -ItemType "directory"
+$CertificatePEMLocation = "$ScriptDirectory\certificates\certificate.cert.pem"
+$CACertificateLocation = "$ScriptDirectory\certificates\AmazonRootCA1.crt"
+
+if (!(Test-Path "$ScriptDirectory\certificates")) {
+    New-Item -Path $ScriptDirectory -Name "certificates" -ItemType "directory"
 }
 
-if (Test-Path $CACertificateLocation -PathType Leaf) {
+if (Test-Path "$CACertificateLocation" -PathType Leaf) {
     Write-Output "Root CA certificate already exists.  Skipping download."
 }
 else {
@@ -17,7 +20,7 @@ else {
 
 if (Test-Path $CertificatePEMLocation) {
     Write-Output "Certificates already exist.  Skipping creation."
-    Get-ChildItem -Path .\ -Filter *.name -Recurse -File -Name| ForEach-Object {
+    Get-ChildItem -Path $ScriptDirectory\certificates -Filter *.name -Recurse -File -Name| ForEach-Object {
         $CertificateId = [System.IO.Path]::GetFileNameWithoutExtension($_)
     }
 }
@@ -25,20 +28,30 @@ else {
     Write-Output "Creating certificate.."
     $KeysAndCertificate = New-IOTKeysAndCertificate -SetAsActive $TRUE
     $KeysAndCertificate.CertificatePem | Out-File $CertificatePEMLocation -Encoding ascii
-    $KeysAndCertificate.KeyPair.PublicKey | Out-File "certificates/certificate.public.key" -Encoding ascii
-    $KeysAndCertificate.KeyPair.PrivateKey | Out-File "certificates/certificate.private.key" -Encoding ascii
+    $KeysAndCertificate.KeyPair.PublicKey | Out-File "$ScriptDirectory\certificates\certificate.public.key" -Encoding ascii
+    $KeysAndCertificate.KeyPair.PrivateKey | Out-File "$ScriptDirectory\certificates\certificate.private.key" -Encoding ascii
     Write-Output $KeysAndCertificate.KeyPair.PrivateKey
 
-    New-Item "certificates/$($KeysAndCertificate.CertificateId).name" -type file
+    New-Item "$ScriptDirectory\certificates\$($KeysAndCertificate.CertificateId).name" -type file
     $CertificateId = $KeysAndCertificate.CertificateId
 
-    openssl pkcs12 -export -in "$CertificatePEMLocation" -inkey "certificates\certificate.private.key" -out "certificates\certificate.cert.pfx" -certfile "$CACertificateLocation" -password pass:MyPassword1
+    openssl pkcs12 -export -in "$CertificatePEMLocation" -inkey "$ScriptDirectory\certificates\certificate.private.key" -out "$ScriptDirectory\certificates\certificate.cert.pfx" -certfile "$CACertificateLocation" -password pass:MyPassword1
 }
 
 Write-Output $CertificateId
-Write-Output "Creating thing: dotnetthing.."
-$ProvisioningTemplate = Get-Content -Path "provisioning_template.json" -Raw
+Write-Output "Creating thing: aws-iot-dotnet-publisher-consumer-framework.."
+$ProvisioningTemplate = Get-Content -Path "$ScriptDirectory\provisioning_template.json" -Raw
 Write-Output $ProvisioningTemplate
 Register-IOTThing `
     -TemplateBody $ProvisioningTemplate `
-    -Parameter @{ "ThingName"="dotnetthing2"; "CertificateId"="$CertificateId" }
+    -Parameter @{ "ThingName"="aws-iot-dotnet-publisher-consumer-framework"; "CertificateId"="$CertificateId" }
+
+$EndpointName = Get-IOTEndpoint
+
+Write-Output "Replacing placeholder with endpoint $EndpointName.."
+Get-ChildItem -Path $ScriptDirectory -Filter *.cs -Recurse -File -Name| ForEach-Object {
+    if( (Select-String -Path $_ -Pattern "<<your-iot-endpoint>>") -ne $null) {
+        Write-Output "Replacing placeholder in $_"
+        (Get-Content $_).Replace("<<your-iot-endpoint>>", $EndpointName) | Set-Content $_
+    }
+}
