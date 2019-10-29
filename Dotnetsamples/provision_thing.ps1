@@ -20,8 +20,8 @@ else {
 
 if (Test-Path $CertificatePEMLocation) {
     Write-Output "Certificates already exist.  Skipping creation."
-    Get-ChildItem -Path $ScriptDirectory\certificates -Filter *.name -Recurse -File -Name| ForEach-Object {
-        $CertificateId = [System.IO.Path]::GetFileNameWithoutExtension($_)
+    Get-ChildItem -Path $ScriptDirectory\certificates -Filter *.name -Recurse -File | ForEach-Object {
+        $CertificateId = [System.IO.Path]::GetFileNameWithoutExtension($_.FullName)
     }
 }
 else {
@@ -38,20 +38,19 @@ else {
     openssl pkcs12 -export -in "$CertificatePEMLocation" -inkey "$ScriptDirectory\certificates\certificate.private.key" -out "$ScriptDirectory\certificates\certificate.cert.pfx" -certfile "$CACertificateLocation" -password pass:MyPassword1
 }
 
-Write-Output $CertificateId
+Write-Output "Certificate ID: $CertificateId"
 Write-Output "Creating thing: aws-iot-dotnet-publisher-consumer-framework.."
 $ProvisioningTemplate = Get-Content -Path "$ScriptDirectory\provisioning_template.json" -Raw
-Write-Output $ProvisioningTemplate
 Register-IOTThing `
     -TemplateBody $ProvisioningTemplate `
-    -Parameter @{ "ThingName"="aws-iot-dotnet-publisher-consumer-framework"; "CertificateId"="$CertificateId" }
+    -Parameter @{ "ThingName"="aws-iot-dotnet-publisher-consumer-framework"; "CertificateId"="$CertificateId" } | Out-Null
 
 $EndpointName = Get-IOTEndpoint
 
 Write-Output "Replacing placeholder with endpoint $EndpointName.."
-Get-ChildItem -Path $ScriptDirectory -Filter *.cs -Recurse -File -Name| ForEach-Object {
-    if( (Select-String -Path $_ -Pattern "<<your-iot-endpoint>>") -ne $null) {
-        Write-Output "Replacing placeholder in $_"
-        (Get-Content $_).Replace("<<your-iot-endpoint>>", $EndpointName) | Set-Content $_
+Get-ChildItem -Path $ScriptDirectory -Filter *.cs -Recurse -File | ForEach-Object {
+    if( (Select-String -Path $_.FullName -Pattern "<<your-iot-endpoint>>") -ne $null) {
+        Write-Output "Replacing placeholder in $($_.FullName)"
+        (Get-Content $_.FullName).Replace("<<your-iot-endpoint>>", $EndpointName) | Set-Content $_.FullName
     }
 }
