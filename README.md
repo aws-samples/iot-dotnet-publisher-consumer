@@ -88,10 +88,12 @@ Import the following namespaces.
 
 ```  c#
 
-using uPLibrary.Networking.M2Mqtt;
-using uPLibrary.Networking.M2Mqtt.Messages;
-using System.Security;
+using System;
+using System.Text;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
+using uPLibrary.Networking.M2Mqtt;
+using System.IO;
 
 ```
 
@@ -101,36 +103,35 @@ Once the connection is successful publish to AWS IOT by specifying the  Topic an
 
 
 ```  c#
+string iotEndpoint = "<<your-iot-endpoint>>";
+Console.WriteLine("AWS IoT Dotnet message publisher starting..");
 
-string iotendpoint = "awsiotendpoint";
-            int BrokerPort = 8883;
-            string Topic = "Hello/World";
+int brokerPort = 8883;
+string topic = "Hello/World";
+string message = "Test message";
 
-            var CaCert = X509Certificate.CreateFromCertFile(@"C:\Iotdevices\dotnetdevice\root-CA.crt");
-            var ClientCert = new X509Certificate2(@"C:\Iotdevices\dotnetdevice\dotnet_devicecertificate.pfx", "password1");
+var caCert = X509Certificate.CreateFromCertFile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "AmazonRootCA1.crt"));
+var clientCert = new X509Certificate2(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "certificate.cert.pfx"), "MyPassword1");
 
-            var Message = "Test message";
-            string ClientId = Guid.NewGuid().ToString();
+var client = new MqttClient(iotEndpoint, brokerPort, true, caCert, clientCert, MqttSslProtocols.TLSv1_2);
 
-            var IotClient = new MqttClient(iotendpoint, BrokerPort, true, CaCert, ClientCert, MqttSslProtocols.TLSv1_2);
+string clientId = Guid.NewGuid().ToString();
+client.Connect(clientId);
+Console.WriteLine($"Connected to AWS IoT with client id: {clientId}.");
 
-           
-            IotClient.Connect(ClientId);
-            Console.WriteLine("Connected");
-
-
-            while (true)
-            {
-                IotClient.Publish(Topic, Encoding.UTF8.GetBytes(Message));
-                Console.WriteLine("published" + Message);
-                Thread.Sleep(5000);
-
-            }
+int i = 0;
+while (true)
+{
+    client.Publish(topic, Encoding.UTF8.GetBytes($"{message} {i}"));
+    Console.WriteLine($"Published: {message} {i}");
+    i++;
+    Thread.Sleep(5000);
+}
             
 ``` 
 
 Hit F5 in visual studio and you should see the messages getting pushed to the AWS IOT Mqtt topic.
-
+ 
 ![](/images/pic5.JPG)
 
 
@@ -146,58 +147,74 @@ On project reference --> Manage Nuget pakcages --> Browse --> 'M2mqtt' and insta
 Import the following namespaces.
 
 ```  c#
+using System;
 using uPLibrary.Networking.M2Mqtt;
 using uPLibrary.Networking.M2Mqtt.Messages;
-using System.Security;
 using System.Security.Cryptography.X509Certificates;
+using System.IO;
 using System.Threading;
-
+using System.Text;
 ```
 
 Then create an instance of Mqtt client object with IOT endpoint, broker port for MQTT, X509Certificate object for root certificate, X5092certificate object for device certificate and Mqttsslprotocols enumeration for TLS1.2. 
 
-You can subscribe to the AWS IOT messages by specifying the Topic as string array and Qos level as byte array. Prior to this event callbacks for MqttMsgSubscribed and MqttMsgPublishReceived should be implemented. The following code snippet covers all of that :-
+You can subscribe to the AWS IOT messages by specifying the Topic as string array and QoS level as byte array. Prior to this event callbacks for MqttMsgSubscribed and MqttMsgPublishReceived should be implemented. The following code snippet covers all of that :
 
 ```  c#
+private static ManualResetEvent manualResetEvent;
 
- static void Main(string[] args)
-        {
-            string IotEndPoint = "awsiotendpoint";
+static void Main(string[] args)
+{
+    string iotEndpoint = "<<your-iot-endpoint>>";
+    int brokerPort = 8883;
 
-            int BrokerPort = 8883;
-            string Topic = "Hello/World";
+    Console.WriteLine("AWS IoT dotnet message consumer starting..");
 
-            var CaCert = X509Certificate.CreateFromCertFile(@"C:\Iotdevices\dotnetdevice\root-CA.crt");
-            var clientCert = new X509Certificate2(@"C:\Iotdevices\dotnetdevice\dotnet_devicecertificate.pfx", "password1");
+    var caCert = X509Certificate.CreateFromCertFile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "AmazonRootCA1.crt"));
+    var clientCert = new X509Certificate2(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "certificate.cert.pfx"), "MyPassword1");
+    
+    var client = new MqttClient(iotEndpoint, brokerPort, true, caCert, clientCert, MqttSslProtocols.TLSv1_2);
+    client.MqttMsgPublishReceived += Client_MqttMsgPublishReceived;
+    client.MqttMsgSubscribed += Client_MqttMsgSubscribed;
 
+    string clientId = Guid.NewGuid().ToString();
+    client.Connect(clientId);
+    Console.WriteLine($"Connected to AWS IoT with client ID: {clientId}");
 
-            string ClientID = Guid.NewGuid().ToString();
+    string topic = "Hello/World";
+    client.Subscribe(new string[] { topic }, new byte[] { MqttMsgBase.QOS_LEVEL_AT_LEAST_ONCE });
 
-            var IotClient = new MqttClient(IotEndPoint, BrokerPort, true, CaCert, clientCert, MqttSslProtocols.TLSv1_2);
-            IotClient.MqttMsgPublishReceived += Client_MqttMsgPublishReceived;
-            IotClient.MqttMsgSubscribed += Client_MqttMsgSubscribed;
+    // Keep the main thread alive for the event receivers to get invoked
+    KeepConsoleAppRunning(() => {
+        client.Disconnect();
+        Console.WriteLine("Disconnecting client..");
+    });
+}
 
-            IotClient.Connect(ClientID);
-            Console.WriteLine("Connected");
-            IotClient.Subscribe(new string[] { Topic }, new byte[] { MqttMsgBase.QOS_LEVEL_AT_LEAST_ONCE });
+private static void Client_MqttMsgSubscribed(object sender, MqttMsgSubscribedEventArgs e)
+{
+    Console.WriteLine($"Successfully subscribed to the AWS IoT topic.");
+}
 
-            while (true)
-            {
-                //keeping the main thread alive for the event call backs
-            }
+private static void Client_MqttMsgPublishReceived(object sender, MqttMsgPublishEventArgs e)
+{
+    Console.WriteLine("Message received: " + Encoding.UTF8.GetString(e.Message));
+}
 
-        }
+private static void KeepConsoleAppRunning(Action onShutdown)
+{
+    manualResetEvent = new ManualResetEvent(false);
+    Console.WriteLine("Press CTRL + C or CTRL + Break to exit...");
 
-        private static void Client_MqttMsgSubscribed(object sender, MqttMsgSubscribedEventArgs e)
-        {
-            Console.WriteLine("Message subscribed");
-        }
+    Console.CancelKeyPress += (sender, e) =>
+    {
+        onShutdown();
+        e.Cancel = true;
+        manualResetEvent.Set();
+    };
 
-        private static void Client_MqttMsgPublishReceived(object sender, MqttMsgPublishEventArgs e)
-        {
-            Console.WriteLine("Message Received is      " + System.Text.Encoding.UTF8.GetString(e.Message));
-        }
-
+    manualResetEvent.WaitOne();
+}
 ``` 
 The complete visual studio solution for this publisher is available under the 'Dotnetsamples' folder in this repository.
 
@@ -234,62 +251,51 @@ cd Iotdotnetcorepublisher
 dotnet new console
 dotnet add package M2MqttClientDotnetCore --version 1.0.1
 dotnet restore
-
 ```
 Open the program.cs in Visual Studio and import the following namespaces.
 
 ``` c#
-
-using System.Security;
+using System;
+using System.IO;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using M2Mqtt;
-using M2Mqtt.Messages;
-using M2Mqtt.Net;
-using M2Mqtt.Utility;
-using M2Mqtt.Internal;
-
 ``` 
 
 Then perform a 'dotnet restore' in the terminal. It will grab the assemblies for System.Security.Cryptography.X509Certificates.
 
 Then create an instance of Mqtt client object with IOT endpoint, broker port for MQTT, X509Certificate object for root certificate, X5092certificate object for device certificate and Mqttsslprotocols enumeration for TLS1.2. 
 
-Once the connection is successful publish to AWS IOT by specifying the  Topic and Payload. The following code snippet covers all of these :-
-
+Once the connection is successful publish to AWS IOT by specifying the topic and payload. The following code snippet covers all of these :
 
 ``` c#
+string iotEndpoint = "<<your-iot-endpoint>>";
+Console.WriteLine("AWS IoT Dotnet core message publisher starting");
+int brokerPort = 8883;
 
-string IotEndPoint = "awsiotendpoint.iot.us-east-1.amazonaws.com";
-            Console.WriteLine("AWS IOT Dotnet core message publiser starting");
-            int BrokerPort = 8883;
-            string Topic = "Hello/World";
+string message = "Test message";
+string topic = "Hello/World";
 
-            var CaCert = X509Certificate.CreateFromCertFile("/home/youruser/dotnetdevice/root-CA.crt");
-            var ClientCert = new X509Certificate2("/home/youruser/dotnetdevice/dotnet_devicecertificate.pfx", "password1");
+var caCert = X509Certificate.CreateFromCertFile(Path.Join(AppContext.BaseDirectory, "AmazonRootCA1.crt"));
+var clientCert = new X509Certificate2(Path.Join(AppContext.BaseDirectory, "certificate.cert.pfx"), "MyPassword1");
 
-            var Message = "Test message";
-            string ClientId = Guid.NewGuid().ToString();
+var client = new MqttClient(iotEndpoint, brokerPort, true, caCert, clientCert, MqttSslProtocols.TLSv1_2);
 
-            var IotClient = new MqttClient(IotEndPoint, BrokerPort, true, CaCert, ClientCert, MqttSslProtocols.TLSv1_2);
+string clientId = Guid.NewGuid().ToString();
+client.Connect(clientId);
+Console.WriteLine($"Connected to AWS IoT with client id: {clientId}.");
 
-            IotClient.Connect(ClientId);
-            Console.WriteLine("Connected to AWS IOT");
-
-
-            
-
-            while (true)
-            {
-                IotClient.Publish(Topic, Encoding.UTF8.GetBytes(Message));
-                Console.WriteLine("Message published");
-                Thread.Sleep(5000);
-
-            }
-
+int i = 0;
+while (true)
+{
+    client.Publish(topic, Encoding.UTF8.GetBytes($"{message} {i}"));
+    Console.WriteLine($"Published: {message} {i}");
+    i++;
+    Thread.Sleep(5000);
+}
 ``` 
-Make sure that the appropriate linux path format is followed for accessing the root certificate and .pfx. It is mentioned in the above snippet. The comple .NET core project source for the publisher is available under the Dotnetcoresamples folder in this repository.
+Make sure that the appropriate linux path format is followed for accessing the root certificate and .pfx. It is mentioned in the above snippet. The complete .NET core project source for the publisher is available under the Dotnetcoresamples folder in this repository.
 
 Run the application using 'dotnet run' and you should see messages published by dotnet core.
 
@@ -313,17 +319,13 @@ dotnet restore
 Open the program.cs in Visual Studio and import the following namespaces.
 
 ``` c#
-
-using System.Security;
+using System;
+using System.IO;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using M2Mqtt;
 using M2Mqtt.Messages;
-using M2Mqtt.Net;
-using M2Mqtt.Utility;
-using M2Mqtt.Internal;
-
 ``` 
 
 Then perform a 'dotnet restore' in the terminal. It will grab the assemblies for System.Security.Cryptography.X509Certificates.
@@ -334,77 +336,65 @@ You can subscribe to the AWS IOT messages by specifying the Topic as string arra
 
 
 ``` c#
+private static ManualResetEvent manualResetEvent;
 
- static void Main(string[] args)
-        {
-          Console.WriteLine("AWS IOT dotnetcore message consumer starting");
-            string IotEndPoint = "awsiotendpoint.amazonaws.com";
-            int BrokerPort = 8883;
-           string Topic = "Hello/World";
-           
-            var CaCert = X509Certificate.CreateFromCertFile("/home/youruser/dotnetdevice/root-CA.crt");
-            var ClientCert = new X509Certificate2("/home/youruser/dotnetdevice/dotnet_devicecertificate.pfx", "password1");
+static void Main(string[] args)
+{
+    string iotEndpoint = "<<your-iot-endpoint>>";
+    int brokerPort = 8883;
+    
+    Console.WriteLine("AWS IoT dotnetcore message consumer starting..");
+    var caCert = X509Certificate.CreateFromCertFile(Path.Join(AppContext.BaseDirectory, "AmazonRootCA1.crt"));
+    var clientCert = new X509Certificate2(Path.Join(AppContext.BaseDirectory, "certificate.cert.pfx"), "MyPassword1");
 
-          
-            string ClientId = Guid.NewGuid().ToString();
+    var client = new MqttClient(iotEndpoint, brokerPort, true, caCert, clientCert, MqttSslProtocols.TLSv1_2);
 
-            var IotClient = new MqttClient(IotEndPoint, BrokerPort, true, CaCert, ClientCert, MqttSslProtocols.TLSv1_2);
+    client.MqttMsgSubscribed += IotClient_MqttMsgSubscribed;
+    client.MqttMsgPublishReceived += IotClient_MqttMsgPublishReceived;
 
-            IotClient.MqttMsgSubscribed += IotClient_MqttMsgSubscribed;
-            IotClient.MqttMsgPublishReceived += IotClient_MqttMsgPublishReceived;
+    string clientId = Guid.NewGuid().ToString();
+    client.Connect(clientId);
+    Console.WriteLine($"Connected to AWS IoT with client ID: {clientId}");
 
-            IotClient.Connect(ClientId);
+    string topic = "Hello/World";
+    Console.WriteLine($"Subscribing to topic: {topic}");
+    client.Subscribe(new string[] { topic }, new byte[] {MqttMsgBase.QOS_LEVEL_AT_LEAST_ONCE });
 
-            Console.WriteLine("Connected to AWS IOT");
-            IotClient.Subscribe(new string[] { Topic}, new byte[] {MqttMsgBase.QOS_LEVEL_AT_LEAST_ONCE });
+    // Keep the main thread alive for the event receivers to get invoked
+    KeepConsoleAppRunning(() => {
+        client.Disconnect();
+        Console.WriteLine("Disconnecting client..");
+    });
+}
 
-            while (true)
-            {
-                //Keeping the mainthread alive for the event receivers to get invoked
+private static void IotClient_MqttMsgPublishReceived(object sender, MqttMsgPublishEventArgs e)
+{
+    Console.WriteLine("Message received: " + Encoding.UTF8.GetString(e.Message));
+}
 
-            }
+private static void IotClient_MqttMsgSubscribed(object sender, MqttMsgSubscribedEventArgs e)
+{
+    Console.WriteLine($"Successfully subscribed to the AWS IoT topic.");
+}
 
-        }
+private static void KeepConsoleAppRunning(Action onShutdown)
+{
+    manualResetEvent = new ManualResetEvent(false);
+    Console.WriteLine("Press CTRL + C or CTRL + Break to exit...");
 
-              private static void IotClient_MqttMsgPublishReceived(object sender, MqttMsgPublishEventArgs e)
-        {
-            Console.WriteLine("Message recived is " + System.Text.Encoding.UTF8.GetString(e.Message));
-        }
+    Console.CancelKeyPress += (sender, e) =>
+    {
+        onShutdown();
+        e.Cancel = true;
+        manualResetEvent.Set();
+    };
 
-
-       private static void IotClient_MqttMsgSubscribed(object sender, MqttMsgSubscribedEventArgs e)
-        {
-            Console.WriteLine("Subscribed to the AWS IOT MQTT topic  ");
-        }
-
-
-
+    manualResetEvent.WaitOne();
+}
 ``` 
 
-The comple .NET core project source for the publisher is available under the Dotnetcoresamples folder in this repository.
+The complete .NET core project source for the publisher is available under the Dotnetcoresamples folder in this repository.
 
 Run the application using 'dotnet run' and you should see messages consumed by the dotnetcore
 
 ![](/images/pic8.png)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
