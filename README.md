@@ -2,11 +2,11 @@
 
 #  1.Objective
 
-The aim of this repository is to provide code samples for simple IoT device publisher and IoT device consumer using .NET framework and .NET core.
+The aim of this repository is to provide code samples for simple IoT device publisher and IoT device consumer using .NET Framework and .NET Core.
 
 # 2. Why .NET publisher and .NET consumer for AWS IoT
 
-At this point in time, there is no AWS IoT device SDK for Microsoft C#. This does not impact the micro, small and medium sized IoT nodes leveraging AWS IoT Framework. The current plethora of IoT device SDKs offered by AWS is more than enough for micro, small and medium-large nodes. However, the large IoT nodes are typically massive enterprise servers running in a smart city use case or a large IIoT implementation in process industries such as petroleum, paper or pulp. There the very nature of network segmentation of IIoT architecture and presence of enterprise technology stack on these IIoT layers would necessitate to leverage a programming language such as C# or Java in implementing those IoT nodes. AWS already offers IoT device SDKs in Java. This post is all about the covering the edge case of implementing IoT device publisher and device consumer using Microsoft C#. 
+At this point in time, there is no AWS IoT device SDK for Microsoft C#. This does not impact the micro, small, and medium sized IoT nodes leveraging AWS IoT Framework. The current plethora of IoT device SDKs offered by AWS is more than enough for micro, small, and medium-large nodes. However, the large IoT nodes are typically massive enterprise servers running in a smart city use case or a large IIoT implementation in process industries such as petroleum, paper or pulp. There the very nature of network segmentation of IIoT architecture and presence of enterprise technology stack on these IIoT layers would necessitate to leverage a programming language such as C# or Java in implementing those IoT nodes. AWS already offers IoT device SDKs in Java. This post is all about the covering the edge case of implementing IoT device publisher and device consumer using Microsoft C#. 
 
 # 3. AWS IoT device publisher and consumer using .NET Framework
 
@@ -18,7 +18,7 @@ At this point in time, there is no AWS IoT device SDK for Microsoft C#. This doe
 
 ## 3b. Create an AWS IoT Thing
 
-To create an AWS IoT thing for use in this sample, you can run the automated provisioning script or walk through the provisioning actions manually in the console.
+You can run the automated provisioning script to create an AWS IoT thing, or choose to walk through the provisioning actions manually in the console.
 
 ## Running the provisioning script
 
@@ -27,8 +27,10 @@ Navigate to the 'dotnetsamples' folder and execute the provision_thing.ps1 Power
 - Downloading the Amazon Root CA certificate.
 - Generating a new certificate in AWS IoT.
 - Converting the private key to .PFX format.
-- Registering the IoT thing with the created certificate.
-- Configuring example to use your account's IoT endpoint URL.
+- Registering an AWS IoT thing with the created certificate.
+- Configuring the sample code to use your account's AWS IoT custom endpoint URL.
+
+You can skip to section 3c if you chose to execute the script.
 
 ## Manually Creating an AWS IoT Thing
 
@@ -73,11 +75,11 @@ During the Thing creation process you should get the following four security art
 
 ###  Converting device certificate from .pem to .pfx
 
-In order to establish an MQTT connection with the AWS IoT platform, the root CA certificate, the private key of the thing and the certificate of the thing/device are needed. The .NET cryptographic APIs can understand root CA (.crt), device private key (.key) out-of-box. It expects the device certificate to be in the .pfx format, not the .pem format. Hence we need to convert the device certificate from .pem to .pfx.
+In order to establish an MQTT connection with the AWS IoT platform, the root CA certificate, the private key of the thing, and the certificate of the thing/device are needed. The .NET cryptographic APIs can understand root CA (.crt), device private key (.key) out-of-the-box. It expects the device certificate to be in the .pfx format, not the .pem format. Hence we need to convert the device certificate from .pem to .pfx.
 
 We'll leverage the openssl for converting .pem to .pfx. Navigate to the folder where all the security artifacts are present and launch bash for Windows 10.
 
-The syntax for converting .pem to .pfx is below :
+The syntax for converting .pem to .pfx is below:
 
 openssl pkcs12 -export -in **iotdevicecertificateinpemformat** -inkey **iotdevivceprivatekey** -out **devicecertificateinpfxformat** -certfile **rootcertificatefile**
 
@@ -88,7 +90,7 @@ openssl pkcs12 -export -in certificates\certificate.cert.pem -inkey certificates
 ![](/images/pic3.JPG)
 
 
-##  3d. Device publisher using .NET framework
+##  3c. Device publisher using .NET Framework
 
 Let's create a windows application in Visual Studio 2017 and name it as 'Iotpublisher'.
 
@@ -103,12 +105,11 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using uPLibrary.Networking.M2Mqtt;
 using System.IO;
-
 ```
 
 Then create an instance of Mqtt client object with IoT endpoint, broker port for MQTT, X509Certificate object for root certificate, X5092certificate object for device certificate and Mqttsslprotocols enumeration for TLS1.2. 
 
-Once the connection is successful publish to AWS IoT by specifying the  Topic and Payload. The following code snippet covers all of these.  Make sure to update the iotEndpoint variable with the name of your account's IoT endpoint if it was not updated when running the provisioning script.
+Once the connection is successful, publish to AWS IoT by specifying the topic and payload. The following code snippet covers all of these.  Be sure to update the iotEndpoint variable with the name of your account's IoT endpoint if it was not updated when running the provisioning script.
 
 
 ```  c#
@@ -139,15 +140,14 @@ while (true)
             
 ``` 
 
-Hit F5 in visual studio and you should see the messages getting pushed to the AWS IoT Mqtt topic.
+Hit F5 in visual studio and you should see the messages getting pushed to the AWS IoT MQTT topic.
  
 ![](/images/pic5.JPG)
 
 
-The complete visual studio solution for this publisher is available under the 'Dotnetsamples' folder in this repository. 
+The complete Visual Studio solution for this publisher is available under the 'Dotnetsamples' folder in this repository. 
 
-
-##  3e. Device consumer using .NET framework
+##  3d. Device consumer using .NET Framework
 
 Let's create a windows application in Visual Studio 2017 and name it as 'Iotconsumer'.
 
@@ -167,7 +167,7 @@ using System.Text;
 
 Then create an instance of Mqtt client object with IoT endpoint, broker port for MQTT, X509Certificate object for root certificate, X5092certificate object for device certificate and Mqttsslprotocols enumeration for TLS1.2. 
 
-You can subscribe to the AWS IoT messages by specifying the Topic as string array and QoS level as byte array. Prior to this event callbacks for MqttMsgSubscribed and MqttMsgPublishReceived should be implemented. The following code snippet covers all of that.  Make sure to update the iotEndpoint variable with the name of your account's IoT endpoint if it was not updated when running the provisioning script.
+You can subscribe to the AWS IoT messages by specifying the Topic as string array and QoS level as byte array. Prior to this event callbacks for MqttMsgSubscribed and MqttMsgPublishReceived should be implemented. The following code snippet covers all of that.  Be sure to update the iotEndpoint variable with the name of your account's IoT endpoint if it was not updated when running the provisioning script.
 
 ```  c#
 private static ManualResetEvent manualResetEvent;
@@ -227,18 +227,18 @@ private static void KeepConsoleAppRunning(Action onShutdown)
 ``` 
 The complete visual studio solution for this publisher is available under the 'Dotnetsamples' folder in this repository.
 
-Hit F5 in visual studio and you should see the messages getting consumed by subscriber.
+Hit F5 in Visual Studio and you should see the messages getting consumed by subscriber.
 
 ![](/images/pic6.JPG)
 
-# 4. AWS IoT device publisher and consumer using .NET core
+# 4. AWS IoT device publisher and consumer using .NET Core
 
 ## 4a. Development environment
 
-The following constitutes the development environment for developing AWS IoT device publisher and consumer using .NET core.
+The following constitutes the development environment for developing AWS IoT device publisher and consumer using .NET Core.
 
 - Ubuntu 16.0.4 or higher (or) any other latest Linux distros
-- .NET core 2.0 or higher
+- .NET Core 2.0 or higher
 - AWS cli
 - Openssl latest version
 
@@ -251,7 +251,7 @@ Alternatively, you can copy the certificates created in the .NET Framework examp
 
 ## 4d. Device publisher using .NET core 
 
-Let's create the .NET core console application for the producer by issuing the following commands in the terminal.
+Let's create the .NET Core console application for the producer by issuing the following commands in the terminal.
 
 ``` shell
 mkdir Iotdotnetcorepublisher
@@ -275,7 +275,7 @@ Then perform a 'dotnet restore' in the terminal. It will grab the assemblies for
 
 Then create an instance of Mqtt client object with IoT endpoint, broker port for MQTT, X509Certificate object for root certificate, X5092certificate object for device certificate and Mqttsslprotocols enumeration for TLS1.2. 
 
-Once the connection is successful publish to AWS IoT by specifying the topic and payload. The following code snippet covers all of these. Make sure to update the iotEndpoint variable with the name of your account's IoT endpoint if it was not updated when running the provisioning script.
+Once the connection is successful publish to AWS IoT by specifying the topic and payload. The following code snippet covers all of these. Be sure to update the iotEndpoint variable with the name of your account's IoT endpoint if it was not updated when running the provisioning script.
 
 ``` c#
 string iotEndpoint = "<<your-iot-endpoint>>";
@@ -308,9 +308,9 @@ Run the application using 'dotnet run' and you should see messages published by 
 
 ![](/images/pic7.png)
 
-## 4e. Device consumer using .NET core 
+## 4e. Device consumer using .NET Core 
 
-Let's create the .NET core console application for the consumer by issuing the following commands in the Terminal.
+Let's create the .NET Core console application for the consumer by issuing the following commands in the Terminal.
 
 ``` shell
 mkdir Iotdotnetcoreconsumer
@@ -320,7 +320,7 @@ dotnet add package M2MqttClientDotnetCore --version 1.0.1
 dotnet restore
 
 ```
-Open the program.cs in Visual Studio and import the following namespaces.
+Open the Program.cs in Visual Studio and import the following namespaces.
 
 ``` c#
 using System;
@@ -396,7 +396,7 @@ private static void KeepConsoleAppRunning(Action onShutdown)
 }
 ``` 
 
-The complete .NET core project source for the publisher is available under the Dotnetcoresamples folder in this repository.
+The complete .NET Core project source for the publisher is available under the Dotnetcoresamples folder in this repository.
 
 Run the application using 'dotnet run' and you should see messages consumed by the dotnetcore
 
