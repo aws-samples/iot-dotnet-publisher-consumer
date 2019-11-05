@@ -22,7 +22,7 @@ You can run the automated provisioning script to create an AWS IoT thing, or cho
 
 ## Running the provisioning script
 
-Navigate to the 'dotnetsamples' folder and execute the provision_thing.ps1 PowerShell script.  This script handles the setup for the .NET Framework examples in this repostitory including:
+Navigate to the 'dotnetsamples' folder and execute the provision_thing.ps1 PowerShell script.  This script handles the setup for the .NET Framework examples in this repository including:
 
 - Downloading the Amazon Root CA certificate.
 - Generating a new certificate in AWS IoT.
