@@ -1,14 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using uPLibrary.Networking.M2Mqtt;
-using uPLibrary.Networking.M2Mqtt.Messages;
-using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
-
+using uPLibrary.Networking.M2Mqtt;
+using System.IO;
 
 namespace Iotpublisher
 {
@@ -16,37 +11,31 @@ namespace Iotpublisher
     {
         static void Main(string[] args)
         {
+            string iotEndpoint = "<<your-iot-endpoint>>";
+            Console.WriteLine("AWS IoT Dotnet message publisher starting..");
 
-            string iotendpoint = "awsiotendpoint.amazonaws.com";
-            int BrokerPort = 8883;
-            string Topic = "Hello/World";
+            int brokerPort = 8883;
+            string topic = "Hello/World";
+            string message = "Test message";
 
-            var CaCert = X509Certificate.CreateFromCertFile(@"C:\Iotdevices\dotnetdevice\root-CA.crt");
-            var ClientCert = new X509Certificate2(@"C:\Iotdevices\dotnetdevice\dotnet_devicecertificate.pfx", "password1");
+            var caCert = X509Certificate.CreateFromCertFile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "AmazonRootCA1.crt"));
+            var clientCert = new X509Certificate2(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "certificate.cert.pfx"), "MyPassword1");
 
-            var Message = "Test message";
-            string ClientId = Guid.NewGuid().ToString();
+            var client = new MqttClient(iotEndpoint, brokerPort, true, caCert, clientCert, MqttSslProtocols.TLSv1_2);
 
-            var IotClient = new MqttClient(iotendpoint, BrokerPort, true, CaCert, ClientCert, MqttSslProtocols.TLSv1_2);
+            string clientId = Guid.NewGuid().ToString();
+            client.Connect(clientId);
+            Console.WriteLine($"Connected to AWS IoT with client id: {clientId}.");
 
-           
-            IotClient.Connect(ClientId);
-            Console.WriteLine("Connected");
-
-
+            int i = 0;
             while (true)
             {
-                IotClient.Publish(Topic, Encoding.UTF8.GetBytes(Message));
-                Console.WriteLine("published" + Message);
+                client.Publish(topic, Encoding.UTF8.GetBytes($"{message} {i}"));
+                Console.WriteLine($"Published: {message} {i}");
+                i++;
                 Thread.Sleep(5000);
-
             }
-            //publish to the topic
-
-
-
         }
-
     }
 }
 

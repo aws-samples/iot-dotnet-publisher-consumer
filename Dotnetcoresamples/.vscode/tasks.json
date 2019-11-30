@@ -1,14 +1,35 @@
 {
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build",
+            "label": "build consumer",
             "command": "dotnet",
-            "type": "process",
+            "type": "shell",
             "args": [
                 "build",
-                "${workspaceFolder}/Iotdotnetcorepublisher/Iotdotnetcorepublisher.csproj"
+                // Ask dotnet build to generate full paths for file names.
+                "/property:GenerateFullPaths=true",
+                "Iotdotnetcoreconsumer/Iotdotnetcoreconsumer.csproj"
             ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "build producer",
+            "command": "dotnet",
+            "type": "shell",
+            "args": [
+                "build",
+                // Ask dotnet build to generate full paths for file names.
+                "/property:GenerateFullPaths=true",
+                "Iotdotnetcorepublisher/Iotdotnetcorepublisher.csproj"
+            ],
+            "group": "build",
             "problemMatcher": "$msCompile"
         }
     ]
