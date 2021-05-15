@@ -3,16 +3,16 @@
 
 #  1.Objective
 
-The aim of this repository is to offer guidance on how to communicate with AWS IoT Core using .NET Framework and .NET Core.
+The aim of this repository is to offer guidance on how to communicate with AWS IoT Core using .NET Framework and .NET Core. The code samples published in this repository leverages X509 Certificate for communicating with AWS IoT Core using MQTT protocol.
 
 # 2. Why .NET publisher and .NET consumer for AWS IoT
 
-At this point in time, there is no AWS IoT Device SDK available for .NET framework and .NET core. The code samples published this repository helps to publish messages to AWS IoT Core and subscribe messages from it, using .NET framework and .NET core.
+At this point in time, there is no AWS IoT Device SDK available for .NET Framework and .NET Core. The .NET Framework and .NET Core are widely adoped by a large community of enterprise developers. When the IoT Edge node is a virtual machine, it paves way for leveraging programming language like C# for implementing Cloud Connector component. The enterprise developers can integrate this Cloud Connector functionality into Console Application, Windows Application and Xamarin mobile applications.
 
-# 3. AWS IoT device publisher and consumer using .NET Framework
+# 3. AWS IoT Device Publisher and Consumer using .NET Framework
 
 
-## 3a. Development environment
+## 3a. Development Environment
 - Windows 10
 - Visual Studio 2017 with latest updates
 - Windows Subsystem for Linux 
