@@ -74,7 +74,7 @@ During the Thing creation process you should get the following four security art
 - **Root certificate** - Download from https://www.amazontrust.com/repository/AmazonRootCA1.pem.  Save this file to 'certificates\AmazonRootCA1.crt'
 
 
-###  Converting device certificate from .pem to .pfx
+###  Converting Device Certificate from .pem to .pfx
 
 In order to establish an MQTT connection with the AWS IoT platform, the root CA certificate, the private key of the thing, and the certificate of the thing/device are needed. The .NET cryptographic APIs can understand root CA (.crt), device private key (.key) out-of-the-box. It expects the device certificate to be in the .pfx format, not the .pem format. Hence we need to convert the device certificate from .pem to .pfx.
 
@@ -91,7 +91,7 @@ openssl pkcs12 -export -in certificates\certificate.cert.pem -inkey certificates
 ![](/images/pic3.JPG)
 
 
-##  3c. Device publisher using .NET Framework
+##  3c. Device Publisher using .NET Framework
 
 Let's create a windows application in Visual Studio 2017 and name it as 'Iotpublisher'.
 
@@ -148,7 +148,7 @@ Hit F5 in visual studio and you should see the messages getting pushed to the AW
 
 The complete Visual Studio solution for this publisher is available under the 'Dotnetsamples' folder in this repository. 
 
-##  3d. Device consumer using .NET Framework
+##  3d. Device Consumer using .NET Framework
 
 Let's create a windows application in Visual Studio 2017 and name it as 'Iotconsumer'.
 
@@ -232,13 +232,13 @@ Hit F5 in Visual Studio and you should see the messages getting consumed by subs
 
 ![](/images/pic6.JPG)
 
-# 4. AWS IoT device publisher and consumer using .NET Core
+# 4. AWS IoT Device Publisher and Consumer using .NET Core
 
-## 4a. Development environment
+## 4a. Development Environment
 
 The following constitutes the development environment for developing AWS IoT device publisher and consumer using .NET Core.
 
-- Ubuntu 16.0.4 or higher (or) any other latest Linux distros
+- Ubuntu 20.0.4 or higher (or) any other latest Linux distros
 - .NET Core 2.0 or higher
 - AWS cli
 - Openssl latest version
@@ -250,7 +250,7 @@ Navigate to the 'dotnetcoresamples' folder and execute the provision_thing.sh sh
 
 Alternatively, you can copy the certificates created in the .NET Framework example to a 'Dotnetcoresamples\certificates' folder or follow the same steps to create a new Thing and certificate.
 
-## 4d. Device publisher using .NET core 
+## 4d. Device Publisher using .NET core 
 
 Let's create the .NET Core console application for the producer by issuing the following commands in the terminal.
 
@@ -309,7 +309,7 @@ Run the application using 'dotnet run' and you should see messages published by 
 
 ![](/images/pic7.png)
 
-## 4e. Device consumer using .NET Core 
+## 4e. Device Consumer using .NET Core 
 
 Let's create the .NET Core console application for the consumer by issuing the following commands in the Terminal.
 
