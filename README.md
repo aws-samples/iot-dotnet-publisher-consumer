@@ -3,11 +3,11 @@
 
 #  1.Objective
 
-The aim of this repository is to provide code samples for simple IoT device publisher and IoT device consumer using .NET Framework and .NET Core.
+The aim of this repository is to offer guidance on how to communicate with AWS IoT Core using .NET Framework and .NET Core.
 
 # 2. Why .NET publisher and .NET consumer for AWS IoT
 
-At this point in time, there is no AWS IoT device SDK for Microsoft C#. This does not impact the micro, small, and medium sized IoT nodes leveraging AWS IoT Framework. The current plethora of IoT device SDKs offered by AWS is more than enough for micro, small, and medium-large nodes. However, the large IoT nodes are typically massive enterprise servers running in a smart city use case or a large IIoT implementation in process industries such as petroleum, paper or pulp. There the very nature of network segmentation of IIoT architecture and presence of enterprise technology stack on these IIoT layers would necessitate to leverage a programming language such as C# or Java in implementing those IoT nodes. AWS already offers IoT device SDKs in Java. This post is all about the covering the edge case of implementing IoT device publisher and device consumer using Microsoft C#. 
+At this point in time, there is no AWS IoT device SDK for .NET framework and .NET core. The code samples published this repository helps to publish messages to AWS IoT Core and subscribe messages from it, using .NET framework and .NET core.
 
 # 3. AWS IoT device publisher and consumer using .NET Framework
 
