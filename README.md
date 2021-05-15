@@ -7,7 +7,7 @@ The aim of this repository is to offer guidance on how to communicate with AWS I
 
 # 2. Why .NET publisher and .NET consumer for AWS IoT
 
-At this point in time, there is no AWS IoT device SDK for .NET framework and .NET core. The code samples published this repository helps to publish messages to AWS IoT Core and subscribe messages from it, using .NET framework and .NET core.
+At this point in time, there is no AWS IoT Device SDK available for .NET framework and .NET core. The code samples published this repository helps to publish messages to AWS IoT Core and subscribe messages from it, using .NET framework and .NET core.
 
 # 3. AWS IoT device publisher and consumer using .NET Framework
 
